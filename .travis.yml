@@ -1,0 +1,13 @@
+language: go
+go:
+ - 1.3.x
+ - 1.4.x
+ - 1.5.x
+ - 1.6.x
+ - 1.7.x
+ - 1.8.x
+script:
+ - mkdir -p example/gopath/src/github.com/panux
+ - ln -s $(pwd) example/gopath/src/github.com/panux/go-makefile
+ - GOPATH=$(pwd)/example/gopath (cd example && go run self.go)
+ - make -C example
