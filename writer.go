@@ -71,13 +71,13 @@ func (w *Writer) QuickRule(name string, deps []string, cmd []string) error {
 	return nil
 }
 
-//WriteComment writes a comment
+//Comment writes a comment
 //Multiline comments are supported
-func (w *Writer) WriteComment(comment string) error {
+func (w *Writer) Comment(comment string) error {
 	if strings.Contains(comment, "\n") {
 		spl := strings.Split(comment, "\n")
 		for _, l := range spl {
-			err := w.WriteComment(l)
+			err := w.Comment(l)
 			if err != nil {
 				return err
 			}
@@ -88,14 +88,14 @@ func (w *Writer) WriteComment(comment string) error {
 	return err
 }
 
-//WriteVar writes out a variable assignment
-func (w *Writer) WriteVar(varname string, val []string) error {
+//Var writes out a variable assignment
+func (w *Writer) Var(varname string, val []string) error {
 	_, err := fmt.Fprintf(w, "\n%s = %s", varname, strings.Join(val, " "))
 	return err
 }
 
-//WriteVarAppend writes a variable append
-func (w *Writer) WriteVarAppend(varname string, val []string) error {
+//VarAppend writes a variable append
+func (w *Writer) VarAppend(varname string, val []string) error {
 	_, err := fmt.Fprintf(w, "\n%s += %s", varname, strings.Join(val, " "))
 	return err
 }

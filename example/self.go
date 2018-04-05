@@ -28,12 +28,12 @@ func main() {
 	_, err = w.Write([]byte("#!/usr/bin/make"))
 	chkerr(err)
 	chkerr(w.BlankLine())
-	chkerr(w.WriteComment(notice))
+	chkerr(w.Comment(notice))
 	chkerr(w.BlankLine())
-	chkerr(w.WriteVar("GOBIN", []string{"go"}))
-	chkerr(w.WriteVar("GOPATH", []string{fmt.Sprintf("%s/gopath", makefile.ShellSub("pwd"))}))
-	chkerr(w.WriteVar("GOGET", []string{makefile.VarSub("GOBIN"), "get"}))
-	chkerr(w.WriteVar("GOBUILD", []string{makefile.VarSub("GOBIN"), "build"}))
+	chkerr(w.Var("GOBIN", []string{"go"}))
+	chkerr(w.Var("GOPATH", []string{fmt.Sprintf("%s/gopath", makefile.ShellSub("pwd"))}))
+	chkerr(w.Var("GOGET", []string{makefile.VarSub("GOBIN"), "get"}))
+	chkerr(w.Var("GOBUILD", []string{makefile.VarSub("GOBIN"), "build"}))
 	chkerr(w.QuickRule("all", []string{"self.mk"}, nil))
 	chkerr(w.QuickRule(
 		makefile.VarSub("GOPATH"), nil,
