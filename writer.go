@@ -2,68 +2,34 @@ package makefile
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
-	"strings"
 )
 
-//Writer is a tool which writes makefiles
-type Writer struct {
-	w      *bufio.Writer
-	rw     *RuleWriter //current RuleWriter
-	closed bool
+type makeWriter struct {
+	w *bufio.Writer
 }
 
-//Write allows you to bypass the structured writing and write directly
-func (w *Writer) Write(dat []byte) (int, error) {
-	if w.closed {
-		return 0, io.ErrClosedPipe
-	}
-	return w.w.Write(dat)
+func (mw makeWriter) writeRaw(raw RawText) error {
+	_, err := mw.w.WriteString(string(raw))
+	return err
 }
 
-//Flush flushes the underlying write buffer
-func (w *Writer) Flush() error {
-	if w.closed {
-		return io.ErrClosedPipe
-	}
-	return w.w.Flush()
-}
-
-func (w *Writer) clrw() {
-	if w.rw != nil {
-		w.rw.wd = true
-		w.rw.cl = true
-		w.rw = nil
-	}
-}
-
-//Rule generates a new rule entry and returns a RuleWriter
-func (w *Writer) Rule(name string) (*RuleWriter, error) {
-	w.clrw()
-	_, err := fmt.Fprintf(w, "\n%s:", name)
-	if err != nil {
-		return nil, err
-	}
-	rw := &RuleWriter{w: w}
-	w.rw = rw
-	return rw, nil
-}
-
-//QuickRule is a wrapper around Rule which does everything at once
-func (w *Writer) QuickRule(name string, deps []string, cmd []string) error {
-	rw, err := w.Rule(name)
-	if err != nil {
-		return err
-	}
-	for _, d := range deps {
-		err = rw.AddDep(d)
-		if err != nil {
-			return err
+func (mw makeWriter) writeMakeVarAssign(mva makeVarAssign) (err error) {
+	defer func() { //catch errors
+		e := recover()
+		if e != nil {
+			err = e.(error)
 		}
-	}
-	for _, c := range cmd {
-		err = rw.AddCommand(c)
+	}()
+	return mw.writeRaw(RawText("\n" + mva.String()))
+}
+
+func (mw makeWriter) writeComment(c *Comment) error {
+	c.afix()
+	for _, l := range *c {
+		_, err := fmt.Fprintf(mw.w, "\n# %s", l)
 		if err != nil {
 			return err
 		}
@@ -71,55 +37,70 @@ func (w *Writer) QuickRule(name string, deps []string, cmd []string) error {
 	return nil
 }
 
-//Comment writes a comment
-//Multiline comments are supported
-func (w *Writer) Comment(comment string) error {
-	if strings.Contains(comment, "\n") {
-		spl := strings.Split(comment, "\n")
-		for _, l := range spl {
-			err := w.Comment(l)
+func (mw makeWriter) writeRule(r *Rule) (err error) {
+	defer func() { //catch errors
+		e := recover()
+		if e != nil {
+			err = e.(error)
+		}
+	}()
+	if r.Attr.OneShell {
+		_, err = mw.w.WriteString("\n.ONESHELL:")
+		if err != nil {
+			return
+		}
+	}
+	_, err = fmt.Fprintf(mw.w, "\n%s:", r.Name.Convert())
+	if err != nil {
+		return
+	}
+	if r.Attr.Shell != nil {
+		_, err = fmt.Fprintf(mw.w, " SHELL:=%s", r.Attr.Shell.Convert())
+		if err != nil {
+			return
+		}
+	}
+	if len(r.Deps) != 0 {
+		for _, v := range r.Deps {
+			_, err = fmt.Fprintf(mw.w, " %s", v.Convert())
 			if err != nil {
-				return err
+				return
 			}
 		}
-		return nil
 	}
-	_, err := fmt.Fprintf(w, "\n# %s", comment)
-	return err
-}
-
-//Var writes out a variable assignment
-func (w *Writer) Var(varname string, val []string) error {
-	_, err := fmt.Fprintf(w, "\n%s = %s", varname, strings.Join(val, " "))
-	return err
-}
-
-//VarAppend writes a variable append
-func (w *Writer) VarAppend(varname string, val []string) error {
-	_, err := fmt.Fprintf(w, "\n%s += %s", varname, strings.Join(val, " "))
-	return err
-}
-
-//BlankLine writes out a blank line for spacing purposes
-func (w *Writer) BlankLine() error {
-	if w.closed {
-		return io.ErrClosedPipe
+	if len(r.Command) != 0 {
+		for _, v := range r.Command {
+			_, err = fmt.Fprintf(mw.w, "\n\t%s", v.String())
+			if err != nil {
+				return
+			}
+		}
 	}
-	_, err := w.w.WriteRune('\n')
-	return err
+	return
 }
 
-//Close closes a writer
-func (w *Writer) Close() error {
-	err := w.Flush()
-	if err != nil {
-		return err
+func (mw makeWriter) writeSomething(i interface{}) error {
+	switch v := i.(type) {
+	case *Rule:
+		return mw.writeRule(v)
+	case RawText:
+		return mw.writeRaw(v)
+	case makeVarAssign:
+		return mw.writeMakeVarAssign(v)
+	case *Comment:
+		return mw.writeComment(v)
+	default:
+		return errors.New("Unsupported type write")
 	}
-	w.closed = true
-	return nil
 }
 
-//NewWriter creates a new Makefile writer
-func NewWriter(w io.Writer) *Writer {
-	return &Writer{w: bufio.NewWriter(w)}
+type countWriter struct {
+	w io.Writer
+	n int64
+}
+
+func (cw *countWriter) Write(dat []byte) (int, error) {
+	n, err := cw.w.Write(dat)
+	cw.n += int64(n)
+	return n, err
 }

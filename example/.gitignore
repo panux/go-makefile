@@ -1,3 +1,4 @@
 self.mk
 *.o
 gopath
+.godeps
