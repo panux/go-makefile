@@ -34,6 +34,7 @@ func main() {
 	chkerr(w.WriteVar("GOPATH", []string{fmt.Sprintf("%s/gopath", makefile.ShellSub("pwd"))}))
 	chkerr(w.WriteVar("GOGET", []string{makefile.VarSub("GOBIN"), "get"}))
 	chkerr(w.WriteVar("GOBUILD", []string{makefile.VarSub("GOBIN"), "build"}))
+	chkerr(w.QuickRule("all", []string{"self.mk"}, nil))
 	chkerr(w.QuickRule(
 		makefile.VarSub("GOPATH"), nil,
 		[]string{fmt.Sprintf("mkdir %s", makefile.VarSub("GOPATH"))},
