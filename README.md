@@ -1,4 +1,4 @@
-# go-makefile [![GoDoc](https://godoc.org/github.com/panux/go-makefile?status.svg)](https://godoc.org/github.com/panux/go-makefile)
+# go-makefile [![GoDoc](https://godoc.org/github.com/panux/go-makefile?status.svg)](https://godoc.org/github.com/panux/go-makefile) [![Build Status](https://travis-ci.org/panux/go-makefile.svg?branch=master)](https://travis-ci.org/panux/go-makefile)
 A go package for generating Makefiles
 
 ## Example
