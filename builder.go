@@ -76,6 +76,13 @@ func (b *Builder) AppendPhony() *Builder {
 	return b
 }
 
+//SectionBuilder returns another Builder which will be substituted in
+func (b *Builder) SectionBuilder() *Builder {
+	sb := NewBuilder()
+	b.addSomething(sb)
+	return sb
+}
+
 //WriteTo writes the Makefile to an io.Writer
 func (b *Builder) WriteTo(w io.Writer) (int64, error) {
 	cw := &countWriter{w: w}

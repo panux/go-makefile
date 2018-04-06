@@ -79,6 +79,11 @@ func (mw makeWriter) writeRule(r *Rule) (err error) {
 	return
 }
 
+func (mw makeWriter) writeBuilder(b *Builder) error {
+	_, err := b.WriteTo(mw.w)
+	return err
+}
+
 func (mw makeWriter) writeSomething(i interface{}) error {
 	switch v := i.(type) {
 	case *Rule:
@@ -89,6 +94,8 @@ func (mw makeWriter) writeSomething(i interface{}) error {
 		return mw.writeMakeVarAssign(v)
 	case *Comment:
 		return mw.writeComment(v)
+	case *Builder:
+		return mw.writeBuilder(v)
 	default:
 		return errors.New("Unsupported type write")
 	}
