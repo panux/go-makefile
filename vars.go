@@ -81,9 +81,9 @@ func (sv ShellVar) CheckValid() error {
 	}
 	for i, c := range sv {
 		switch {
-		case (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'):
-		case c >= '0' && c <= '9':
-			if i == 0 {
+		case (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'): //allow letters
+		case c >= '0' && c <= '9': //handle numbers
+			if i == 0 { //return an error if the variable starts with a number
 				return ErrIllegalRune{
 					Rune:      c,
 					SrcString: string(sv),
@@ -91,8 +91,8 @@ func (sv ShellVar) CheckValid() error {
 					Context:   "initial",
 				}
 			}
-		case c == '_':
-		default:
+		case c == '_': //allow _
+		default: //return error if there is a different rune
 			return ErrIllegalRune{
 				Rune:      c,
 				SrcString: string(sv),
